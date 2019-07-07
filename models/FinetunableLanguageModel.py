@@ -1,51 +1,52 @@
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM, GRU
+from keras.layers import Dense, Embedding, LSTM, GRU, TimeDistributed
 
 from sklearn.datasets import make_classification
 
 class FinetunableLanguageModel:
 
-    def __init__(self, vocab_size=1000, embedding_size=100, n_layers=1, cell_type='LSTM'):
-        super(FinetunableLanguageModel, self).__init__()
+    def __init__(self, embedding_size=100, cell_type='LSTM', layer_size=100, n_layers=1):
         
-        model = Sequential()
-        model.add()
-        self.add()
+        self.embedding_size= 100
+        self.cell_type= cell_type
+        self.layer_size = layer_size
+        self.n_layers = 1
+
     
-    def finetune (self,
-            X=None,
-            y=None,
-            new_class_count=None,
-            
-            **kwargs):
-
-        assert new_class_count is not None, "please specify the target class count for finetuning..."
-        # extract keyword arguments
-        new_loss = kwargs['new_loss'] if 'new_loss' in kwargs else self.loss
-        kwargs.pop('new_loss')
+    def _build_model(self, vocab_size, optmizer='adam', lr=0.001):
+        model = Sequential()
+        model.add(Embedding(input_dim=vocab_size, output_dim=self.embedding_size))
         
-        # popping the last layer
-        self.pop()
+        if self.cell_type=='LSTM':
+            rnn=LSTM
+        elif self.cell_type=='GRU':
+            rnn=GRU
+        else :
+            raise ValueError('Unknnown %s RNN cell type' %(self.cell_type))
+        
+        for _ in range(self.n_layers):
+            model.add(rnn(units=self.layer_size, return_sequences=True))
 
-        self.add(Dense(new_class_count, activation='softmax'))
-        self.compile(loss=new_loss, optimizer=self.optimizer, metrics=self.metrics)
+        model.add(TimeDistributed(Dense(vocab_size, activation='softmax')))
+        
+        model.summary()
+        self.model=model
 
-        self.fit(X, y, **kwargs) 
+    def train_on_text(data, epochs=10, lr=0.01):
+
+        '''
+        data: a list of strings representing a set of sentences
+        '''
+
+        ## tokenize 
+        #   
 
 
-if __name__ =='__main__':
+
+if __name__ == '__main__':
 
     X, y = make_classification()
 
-    model = FinetunableSequential()
-    model.add(Dense(100, input_shape=(20,)))
-    model.add(Dense(1))
-
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(X, y)
-
-    X, y = make_classification(n_classes=5, n_informative=10)
-
-    model.finetune(X, y, new_class_count=5, new_loss ='sparse_categorical_crossentropy')
+    model = FinetunableLanguageModel(n_layers=3)
 
 
