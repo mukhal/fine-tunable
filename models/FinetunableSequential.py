@@ -1,45 +1,51 @@
 from keras.models import Sequential
 from keras.layers import Dense
 
-class FinetunableSequential(Sequential):
+from sklearn.datasets import make_classification
 
+class FinetunableSequentialClassifier(Sequential):
 
-    def finetune (self,
-            x=None,
-            y=None,
-            new_class_count=None,
-            batch_size=None,
-            epochs=1,
-            verbose=1,
-            callbacks=None,
-            validation_split=0.,
-            validation_data=None,
-            shuffle=True,
-            class_weight=None,
-            sample_weight=None,
-            initial_epoch=0,
-            steps_per_epoch=None,
-            validation_steps=None,
-            validation_freq=1,
-            max_queue_size=10,
-            workers=1,
-            use_multiprocessing=False,
-            slanted_triangular_learning_rates=False,
-            discriminative_finetuning=False,
-            gradual_unfreezing=False,
+    def __init__(self):
+        super(FinetunableSequentialClassifier, self).__init__()
 
-            **kwargs):
+    
+    def finetune (self, X=None, y=None, new_class_count=None, new_loss=None, layers_to_pop=1, new_optimizer=None, **kwargs):
+        """finetunes an already trained model on the new_class_count"""
 
-        assert new_class_count is not None
+        assert new_class_count is not None, "please specify the target class count for finetuning..."
+       
+        # set new loss if any
+        new_loss = new_loss or self.loss
 
-        self.pop()
-        # popping the last layer 
-        self.add(Dense(2, activation='softmax'))
-        self.compile(loss=self.loss, optimizer=self.optimizer, metrics=self.metrics)
+        # set new optimizer if any
+        new_optimizer = new_optimizer or self.optimizer
+        # popping the last n layer
+        for _ in range(layers_to_pop):
+            self.pop()
 
-        self.fit(X,y) 
+        # add new classifieication head
+        self.add(Dense(new_class_count, activation='softmax'))
+        
+        # compile new model with new loss
+        self.compile(loss=new_loss, optimizer=new_optimizer, metrics=self.metrics)
+
+        # finetune the new model
+        self.fit(X, y, **kwargs) 
 
 
 if __name__ =='__main__':
 
-    pass
+    X, y = make_classification()
+
+    model = FinetunableSequentialClassifier()
+    model.add(Dense(100, input_shape=(20,)))
+    model.add(Dense(1))
+
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(X, y)
+
+    X, y = make_classification(n_classes=5, n_informative=10)
+
+    model.finetune(X, y, new_class_count=5, new_loss ='sparse_categorical_crossentropy')
+
+
