@@ -11,7 +11,7 @@ Finetunable is an NLP transfer learning package based on Keras. You can pre-trai
 
 The main class is the `FinetunableLanguageModel` class.
 
-```
+```python
 from finetunable.models.FinetunableLanguageModel import FinetunableLanguageModel # import model
 
 # sample pretraining dataset
@@ -33,7 +33,7 @@ model.train_on_texts(x, epochs=1)
 ### Finetuning for classfication
 
 To finetune the model, you need to call `model.finetune_for_clf()` and pass the classfication dataset and the new class count :
-```
+```python
 # create  classification dataset
 x = ['this is so sad',
      'I am so happy']
