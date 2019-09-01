@@ -78,6 +78,7 @@ class FinetunableLanguageModel:
         # pad sequences
         train_sequences = pad_sequences(train_sequences, maxlen=max_seq_len, padding='post', value = self.vocab_size - 1)
 
+        x, y = zip(*[(train_sequences[i, 0:-1], train_sequences[i, 1:]) for i in range(len(train_sequences))])
 
     def train(train_ids, epochs=10):
         pass
@@ -97,6 +98,8 @@ if __name__ == '__main__':
     'this world is beautfully beautiful'
     ]
 
-    model = FinetunableLanguageModel(n_layers=3)
+    model = FinetunableLanguageModel(n_layers=1)
+    
+    model.train_on_texts(x)
 
 
