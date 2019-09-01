@@ -2,7 +2,6 @@ from keras.models import Sequential
 from keras.layers import Dense, Embedding, LSTM, GRU, TimeDistributed, Lambda, GlobalAveragePooling1D, GlobalMaxPool1D
 
 from sklearn.datasets import make_classification
-from FinetunableSequential import FinetunableSequentialClassifier
 from keras.preprocessing.sequence import pad_sequences
 from keras.preprocessing.text import Tokenizer
 
