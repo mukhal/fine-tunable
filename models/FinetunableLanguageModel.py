@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM, GRU, TimeDistributed, Lambda
+from keras.layers import Dense, Embedding, LSTM, GRU, TimeDistributed, Lambda, GlobalAveragePooling1D, GlobalMaxPool1D
 
 from sklearn.datasets import make_classification
 from FinetunableSequential import FinetunableSequentialClassifier
@@ -69,6 +69,10 @@ class FinetunableLanguageModel:
             optimizer (str or ocject of type keras.optimizers)
         '''
 
+        # take pretrianing optimizer
+        self.optimizer=optimizer
+
+
         # tokenize text 
         logger.info('Tokenizing texts...')
         tokenizer = Tokenizer(num_words=self.vocab_size)
@@ -121,35 +125,47 @@ class FinetunableLanguageModel:
         self.is_pretrained= True
 
 
-    def finetune_for_clf(self, X=None, y=None, new_class_count=None, new_loss=None, new_optimizer=None, **kwargs):
+    def finetune_for_clf(self, x, y, new_class_count, epochs=10, batch_size=16, new_optimizer=None, max_seq_len=128, metrics=['accuracy'], **kwargs):
         """
         finetunes the pretrained LM for classification
 
         TODO: discriminative learning rate
         TODO: gradual unfreezing
+
+        Args:
+            x (list of strings): represent finetuning dataset
+            y (list of class ids): represents class labels
         
         """
-        assert self.is_pretrained, "You must pretrain the language model first before finetuning it!"
-        assert new_class_count is not None, "please specify the target class count for finetuning!"
-        assert new_loss is not None, "please specify the new finetuning loss!"
-       
+
+        logger.info("Finetuning model for classification")
         # set new optimizer if any
         new_optimizer = new_optimizer or self.optimizer
         
         # popping the last layer
-        self.pop()
+        self.model.pop()
 
         # adding maxpooling layer
-        maxpool = lambda
-        
+        self.model.add(GlobalMaxPool1D())
+
         # add new classifieication head
-        self.add(Dense(new_class_count, activation='softmax'))
+        self.model.add(Dense(new_class_count, activation='softmax'))
         
         # compile new model with new loss
-        self.compile(loss=new_loss, optimizer=new_optimizer, metrics=self.metrics)
+        self.model.compile(loss='sparse_categorical_crossentropy', optimizer=new_optimizer, metrics=metrics)
+        
 
+        # tokenize and create ids
+
+        x = self.tokenizer.texts_to_sequences(x)
+
+        max_len = max([len(seq) for seq in x])
+        max_len =  min(max_len, max_seq_len)
+        
+        x = pad_sequences(x, padding='post', maxlen = max_len, value=self.padding_index)
+        
         # finetune the new model
-        self.fit(X, y, **kwargs) 
+        self.model.fit(x, y, batch_size=batch_size, epochs=epochs) 
 
 
 
@@ -182,6 +198,10 @@ if __name__ == '__main__':
 
     model = FinetunableLanguageModel(n_layers=1)
     
-    model.train_on_texts(x)
+    model.train_on_texts(x, epochs=1)
+
+    y= [1,0,1]
+
+    model.finetune_for_clf(x,y,2)
 
 
