@@ -21,7 +21,6 @@ x = ['This is a sentence',
     ]
     
 # create your Language model
-
 model = FinetunableLanguageModel(n_layers=3, cell_type='GRU', layer_size=100, vocab_size=50)
 
 # pretraing the language model 
