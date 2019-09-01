@@ -37,12 +37,25 @@ To finetune the model, you need to call `model.finetune_for_clf()` and pass the 
 # create  classification dataset
 x = ['this is so sad',
      'I am so happy']
-
 # labels
 y = [0, 1]
 
 # finetune
 model.finetune_for_clf(x,y,2)
-
-    
 ```
+
+
+## TODO
+
+* Language Model finetuning as in [ULMFit](https://arxiv.org/abs/1801.06146)
+* Discriminative Learning Rates
+* Gradual Unfreezing
+* Masked loss to avoid cmoputing loss for the pad symbol
+* Transformer Models in addition to RNN
+
+
+
+## License
+
+MIT 
+
